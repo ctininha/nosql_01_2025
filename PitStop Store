@@ -8,7 +8,44 @@ Focando em aumentar a rentabilidade da loja, e fidelizar os consumidores.
 
 * 13/02/2025
 
-As duas operações principais são:
+As duas principais operações:
 
 . Controle das vendas
 . Cadastro dos funcionários
+
+Definição dos campos das operações:
+
+CONTROLE DAS VENDAS:
+
+- Data/hora venda – Entender o momento da venda e acompanhar períodos de pico.
+- Descrição do item – Identificar o que foi vendido.
+- Quantidade do item – Controlar estoque e fluxo de vendas.
+- Valor de venda – Calcular a receita.
+- Método de pagamento – Informar sobre a forma de pagamento do cliente (dinheiro, cartão de crédito, débito, etc.). Pode ajudar a 
+  entender o comportamento do cliente e otimizar o fluxo de caixa.
+- Unidade do item – Verificar se a venda foi por unidade, caixa, litro, etc.
+- Valor de custo – Calcular a margem de lucro, e o custo de cada venda.
+- Grupo do produto – Analisar as vendas por categoria de produto.
+- Fornecedor do item – Rastrear a origem do produto e facilitar negociações.
+- Nome funcionário venda – Identificar quem fez a venda, pode ser usado para comissionamento e auditoria.
+- Loja da venda – Identificar o local da venda.
+- Status da venda – Identificar se a venda foi finalizada, cancelada, etc.
+
+
+CADASTRO DOS FUNCIONÁRIOS:
+
+- CPF – Identificar o funcionário, e pode também ser usado para questões fiscais e trabalhistas.
+- Nome – Identificação e comunicação.
+- Data nascimento – Identificar aniversário, e poder calcular a idade do funcionário e calcular benefícios legais, como a aposentadoria.
+- Endereço – Utilizar para comunicação e possíveis aspectos relacionados a benefícios ou obrigações fiscais.
+- Departamento/Setor – Identificar onde o funcionário está alocado.
+- Telefone de contato – Essencial para comunicação rápida, pode ser celular ou telefone fixo.
+- Email – Importante para comunicação interna, especialmente para avisos, comunicados ou casos de emergência.
+- Salário – Importante para controle financeiro e cálculo de benefícios.
+- Benefícios – Registro dos benefícios recebidos pelo funcionário, como vale-transporte, vale-refeição, plano de saúde, etc.
+- Cargo/Função – Identificar qual função o funcionário desempenha na empresa. Essencial para organizar departamentos e responsabilidades.
+- Cargo anterior – Caso o funcionário tenha sido promovido ou transferido de área, esse campo pode ser útil para histórico de cargos.
+- Número de carteira de trabalho – Necessário para fins legais de registro de contrato de trabalho.
+- Data admissão – Importante para calcular tempo de serviço, férias e outros benefícios relacionados.
+- Data rescisão do contrato – Importante para registrar quando o vínculo de trabalho foi encerrado.
+- Status do funcionário – Identificar se o funcionário está ativo, de licença, afastado, férias ou desligado.
