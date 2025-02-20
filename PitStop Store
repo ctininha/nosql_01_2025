@@ -2,7 +2,7 @@
 
 Sistema: Vendas de produtos em loja de conveniência de posto de gasolina
 
-Objetico: O projeto visa aumentar a rentabilidade e a experiência do cliente por meio da diversidade dos produtos 
+Objetivo: O projeto visa aumentar a rentabilidade e a experiência do cliente por meio da diversidade dos produtos 
 ofertados na loja de conveniência de um posto de gasolina, proporcionando uma gama de itens essenciais e de conveniência. 
 Focando em aumentar a rentabilidade da loja, e fidelizar os consumidores.
 
@@ -49,3 +49,92 @@ CADASTRO DOS FUNCIONÁRIOS:
 - Data admissão – Importante para calcular tempo de serviço, férias e outros benefícios relacionados.
 - Data rescisão do contrato – Importante para registrar quando o vínculo de trabalho foi encerrado.
 - Status do funcionário – Identificar se o funcionário está ativo, de licença, afastado, férias ou desligado.
+
+* 20/03/2025
+
+- Revisão do Objetivo:
+Armazenar as vendas das lojas de conveniências dos postos de gasolina, e permitir as consultas dos seguintes itens: Volume de vendas,
+itens mais vendidos, identificar sazonalidades diárias, mensais e anuais e identificar padrões de pagamentos e compras.
+Disponibilizar estas informaçoes ao time de gestão para criação de planos de ação.
+
+- DEFINIÇÃO DO JSON DAS DUAS PRINCIPAIS OPERAÇÕES:
+. Controle das vendas
+
+
+. Cadastro dos funcionários
+{
+  "funcionarios": [
+    {
+      "cpf": "111.111.111-11”,
+      "nome": “Patricia Pereira",
+      "data_nascimento": "1990-10-20”,
+      "endereco": {
+        "logradouro": "Rua do Girasol”,
+        "numero": 25,
+        "bairro": "Centro",
+        "cidade": “Monte Alegre”,
+        "estado": "MG",
+        "cep": “68220-111”
+      },
+      "departamento_setor": “Vendas”,
+      "telefone_contato": "(34) 99976-1414",
+      "email": “patricia.pereira@email.com",
+      "salario": 2.500.00,
+      "beneficios": ["Vale Refeição", "Vale Transporte", "Plano de Saúde"],
+      "cargo": “Balconista”,
+      "cargo_anterior": null,
+      "numero_carteira_trabalho": “111111111”,
+      "data_admissao": "2020–01-01”,
+      "data_rescisao": null,
+      "status_funcionario": "Ativo"
+    },
+    {
+      "cpf": “222.222.222-22”,
+      "nome": "Alessandra Teixeira”,
+      "data_nascimento": "1995-09-25",
+      "endereco": {
+        "logradouro": "Avenida Brasil",
+        "numero": 987,
+        "bairro": "Jardins",
+        "cidade": “Monte Alegre”,
+        "estado": “MG”,
+        "cep": “68220-001"
+      },
+      "departamento_setor": “Vendas”,
+      "telefone_contato": "(11) 91234-5678",
+      "email": "alessandra.teixeira@email.com",
+      "salario": 3.000.00,
+      "beneficios": ["Vale Refeição", "Vale Transporte", "Plano de Saúde"],
+      "cargo": “Balconista”,
+      "cargo_anterior": “Limpeza”,
+      "numero_carteira_trabalho": “2222222”,
+      "data_admissao": "2017-03-01",
+      "data_rescisao": null,
+      "status_funcionario": "Ativo"
+    }
+{
+      "cpf": “333.333.333-33”,
+      "nome": “Mauro Costa”,
+      "data_nascimento": "1990–01-22”,
+      "endereco": {
+        "logradouro": "Avenida Irapuru”,
+        "numero": 1313”,
+        "bairro": “Olanda”,
+        "cidade": “Monte Alegre”,
+        "estado": “MG”,
+        "cep": “68220-231"
+      },
+      "departamento_setor": “Marketing”,
+      "telefone_contato": "(11) 91825-1658",
+      "email": "mauro.costa@email.com",
+      "salario": 3.800.00,
+      "beneficios": ["Vale Refeição", "Vale Transporte", "Plano de Saúde"],
+      "cargo": “Midia Digital”,
+      "cargo_anterior": null,
+      "numero_carteira_trabalho": “333333333”,
+      "data_admissao": "2024-01-01",
+      "data_rescisao": “2024-09-15”,
+      "status_funcionario": “Inativo”
+    }
+  ]
+}
