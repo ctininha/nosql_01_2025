@@ -58,10 +58,56 @@ itens mais vendidos, identificar sazonalidades diárias, mensais e anuais e iden
 Disponibilizar estas informaçoes ao time de gestão para criação de planos de ação.
 
 - DEFINIÇÃO DO JSON DAS DUAS PRINCIPAIS OPERAÇÕES:
+
 . Controle das vendas
 
+"venda": {
+"data_hora": "2024-02-20T11:45:00Z",
+"itens": [
+    {
+    "descricao": “Mixto Quente“,
+    "quantidade": 1,
+    "unidade": "un",
+    "valor_custo": 12.00,
+    "grupo_produto": “Sanduiche”,
+    "fornecedor": “Producao propria”
+    },
+    {
+    "descricao": “Cafe”,
+    "quantidade": 1,
+    "unidade": "un",
+    "valor_custo": 10.00,
+    "grupo_produto": “Bebidas”,
+    "fornecedor": “cafe cajuba”
+    }
+  ],
+  "metodo_pagamento": "Pix",
+  "nome_funcionario": “Alessandra Teixeira”,
+  "loja": “Loja 01”,
+  "status": “Aprovado”
+  }
+}
+"venda": {
+"data_hora": "2025-24-20T19:00:00Z",
+"itens": [
+    {
+    "descricao": “Coca Cola“,
+    "quantidade": 10,
+    "unidade": "un",
+    "valor_custo": 55.00,
+    "grupo_produto": “Bebidas”,
+    "fornecedor": “Coca Cola”
+    },
+  ],
+  "metodo_pagamento": “Especie”,
+  "nome_funcionario": “Alessandra Teixeira”,
+  "loja": “Loja 01”,
+  "status": “Pendente”
+  }
+}
 
 . Cadastro dos funcionários
+
 {
   "funcionarios": [
     {
