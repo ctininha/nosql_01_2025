@@ -1,0 +1,56 @@
+from fastapi import FastAPI
+from pymongo import MongoClient
+from pydantic import BaseModel
+from typing import List
+
+# Conectar ao MongoDB
+client = MongoClient("mongodb://localhost:27017/")  # Conexão local
+db = client['vendas']  # Banco de dados 'vendas'
+colecao = db['registros_vendas']  # Coleção 'registros_vendas'
+
+# Definição do FastAPI
+app = FastAPI()
+
+# Modelo de dados para validar a resposta
+class RegistroVenda(BaseModel):
+    _id: str
+    descricao: str
+    quantidade: int
+    valor_venda: float
+    metodo_pagamento: str
+    unidade: str
+    valor_custo: float
+    grupo_produto: str
+    fornecedor: str
+    nome_funcionario: str
+    loja: str
+    status_venda: str
+    data_hora_venda: str
+
+# Endpoint para obter todos os registros de vendas
+@app.get("/registros_vendas/", response_model=List[RegistroVenda])
+async def get_registros_vendas():
+    # Encontrar todos os registros da coleção
+    registros = colecao.find()
+
+    # Converter os dados para o modelo Pydantic
+    return [RegistroVenda.parse_obj({
+        "_id": str(registro["_id"]),
+        "descricao": registro["descricao"],
+        "quantidade": registro["quantidade"],
+        "valor_venda": float(str(registro["valor_venda"]).replace(",", ".")),  # Correção aqui
+        "metodo_pagamento": registro["metodo_pagamento"],
+        "unidade": registro["unidade"],
+        "valor_custo": float(str(registro["valor_custo"]).replace(",", ".")),  # Correção aqui
+        "grupo_produto": registro["grupo_produto"],
+        "fornecedor": registro["fornecedor"],
+        "nome_funcionario": registro["nome_funcionario"],
+        "loja": registro["loja"],
+        "status_venda": registro["status_venda"],
+        "data_hora_venda": registro["data_hora_venda"]
+    }) for registro in registros]
+
+# Endpoint para a raiz ("/")
+@app.get("/")
+async def read_root():
+    return {"message": "Bem-vindo à API de vendas!"}
