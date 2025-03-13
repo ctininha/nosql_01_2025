@@ -1,0 +1,179 @@
+Aggregation Pipelines para o Aplicativo de Cadastro de Funcionários
+1. Obter Todos os Funcionários Ativos
+
+Este pipeline retorna todos os funcionários com status "Ativo".
+
+[
+  {
+    $match: {
+      status_funcionario: "Ativo"
+    }
+  },
+  {
+    $project: {
+      _id: 0, // Exclui o campo _id
+      cpf: 1,
+      nome: 1,
+      data_nascimento: 1,
+      endereco: 1,
+      departamento_setor: 1,
+      telefone_contato: 1,
+      email: 1,
+      salario: 1,
+      beneficios: 1,
+      cargo: 1,
+      status_funcionario: 1
+    }
+  }
+]
+
+2. Obter Funcionários por Departamento/Setor
+
+Este pipeline retorna todos os funcionários de um determinado departamento ou setor.
+
+[
+  {
+    $match: {
+      departamento_setor: "Nome do Departamento/Setor" // Substitua pelo nome desejado
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      cpf: 1,
+      nome: 1,
+      data_nascimento: 1,
+      endereco: 1,
+      departamento_setor: 1,
+      telefone_contato: 1,
+      email: 1,
+      salario: 1,
+      beneficios: 1,
+      cargo: 1,
+      status_funcionario: 1
+    }
+  }
+]
+
+3. Calcular Média Salarial por Departamento/Setor
+
+Este pipeline calcula a média salarial dos funcionários em cada departamento ou setor.
+
+[
+  {
+    $group: {
+      _id: "$departamento_setor",
+      media_salarial: { $avg: "$salario" }
+    }
+  },
+  {
+    $project: {
+      departamento_setor: "$_id",
+      media_salarial: 1,
+      _id: 0
+    }
+  }
+]
+
+4. Listar Funcionários com Benefícios Específicos
+
+Este pipeline retorna todos os funcionários que possuem um benefício específico.
+
+[
+  {
+    $match: {
+      beneficios: "Nome do Benefício" // Substitua pelo nome do benefício desejado
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      cpf: 1,
+      nome: 1,
+      data_nascimento: 1,
+      endereco: 1,
+      departamento_setor: 1,
+      telefone_contato: 1,
+      email: 1,
+      salario: 1,
+      beneficios: 1,
+      cargo: 1,
+      status_funcionario: 1
+    }
+  }
+]
+
+5. Contar Funcionários por Status
+
+Este pipeline conta quantos funcionários existem em cada status (Ativo ou Inativo).
+
+[
+  {
+    $group: {
+      _id: "$status_funcionario",
+      total_funcionarios: { $sum: 1 }
+    }
+  },
+  {
+    $project: {
+      status_funcionario: "$_id",
+      total_funcionarios: 1,
+      _id: 0
+    }
+  }
+]
+
+6. Obter Funcionários por Cargo
+
+Este pipeline retorna todos os funcionários que possuem um cargo específico.
+
+[
+  {
+    $match: {
+      cargo: "Nome do Cargo" // Substitua pelo nome do cargo desejado
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      cpf: 1,
+      nome: 1,
+      data_nascimento: 1,
+      endereco: 1,
+      departamento_setor: 1,
+      telefone_contato: 1,
+      email: 1,
+      salario: 1,
+      beneficios: 1,
+      cargo: 1,
+      status_funcionario: 1
+    }
+  }
+]
+
+Como Usar os Pipelines
+
+1. Conecte-se ao MongoDB: Utilize um cliente MongoDB (como o MongoDB Compass ou o shell mongo).
+2. Selecione o Banco de Dados e Coleção: Escolha o banco de dados empresa e a coleção funcionarios.
+3. Execute o Pipeline: Utilize o método aggregate() para executar o pipeline desejado.
+
+Exemplo no MongoDB Compass:
+
+1. Abra o MongoDB Compass e conecte-se ao seu servidor MongoDB.
+2. Selecione o banco de dados empresa e a coleção funcionarios.
+3. Vá para a aba "Aggregation".
+4. Cole o pipeline desejado na área de edição.
+5. Clique em "Run".
+
+Exemplo no Shell mongo:
+
+1. Abra o terminal e conecte-se ao MongoDB: mongo
+2. Use o banco de dados empresa: use empresa
+3. Execute o pipeline:
+
+db.funcionarios.aggregate([
+  // Cole o pipeline aqui
+])
+
+Estes pipelines fornecem uma base para consultas e análises dos dados de funcionários. Você pode adaptá-los e combiná-los para criar consultas mais complexas de acordo com suas necessidades.
+
