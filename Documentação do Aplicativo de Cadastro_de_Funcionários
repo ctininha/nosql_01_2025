@@ -1,0 +1,106 @@
+Documentação do Aplicativo de Cadastro de Funcionários
+Este documento descreve como configurar, executar e usar o aplicativo de cadastro de funcionários desenvolvido em Python com interface gráfica Tkinter e armazenamento de dados no MongoDB.
+
+1. Visão Geral
+
+O aplicativo permite que os usuários cadastrem informações de funcionários de forma fácil e rápida através de uma interface gráfica. Os dados dos funcionários são armazenados em um banco de dados MongoDB para posterior consulta e análise.
+
+2. Pré-requisitos
+
+Python 3.7+ instalado
+MongoDB instalado e em execução
+Pip (gerenciador de pacotes do Python)
+
+3. Instalação
+
+Clone o Repositório (ou Baixe os Arquivos)
+
+Se você tiver o código em um repositório Git, clone-o. Caso contrário, baixe os arquivos do projeto.
+
+Crie um Ambiente Virtual (Recomendado)
+
+python3 -m venv venv
+source venv/bin/activate  # No Linux/macOS
+venv\Scripts\activate  # No Windows
+
+Instale as Dependências
+
+pip install tkinter pymongo
+
+Certifique-se de que o MongoDB esteja em execução na porta padrão (27017)
+
+Caso contrário, ajuste a string de conexão no código (mongodb://localhost:27017/).
+
+4. Executando o Aplicativo
+
+Navegue até o diretório onde o arquivo do aplicativo está localizado.
+
+Execute o aplicativo Python:
+
+python nome_do_arquivo.py
+
+Substitua nome_do_arquivo.py pelo nome do seu arquivo Python).
+
+5. Usando o Aplicativo
+
+Interface Gráfica
+
+Ao executar o aplicativo, uma janela com campos para inserir os dados do funcionário será exibida.
+
+Inserindo Dados
+
+Preencha os campos com as informações do funcionário:
+
+CPF
+Nome
+Data de Nascimento (YYYY-MM-DD)
+Logradouro
+Bairro
+Cidade
+Estado
+CEP
+Departamento/Setor
+Telefone de Contato
+E-mail
+Salário
+Benefícios (separados por vírgula)
+Cargo
+Status do Funcionário (selecione na lista)
+Salvando o Funcionário
+
+Clique no botão "Salvar Funcionário" para registrar os dados no banco de dados MongoDB.
+
+Mensagens
+
+Sucesso: Uma mensagem de sucesso será exibida se os dados forem salvos corretamente.
+Erro: Uma mensagem de erro será exibida se houver algum problema ao salvar os dados ou se campos obrigatórios não forem preenchidos.
+Limpar Campos
+
+Após salvar os dados, os campos serão automaticamente limpos para um novo registro.
+
+6. Estrutura do Banco de Dados MongoDB
+
+Os dados são armazenados no banco de dados empresa, na coleção funcionarios. Cada registro de funcionário é um documento com os seguintes campos:
+
+cpf: CPF do funcionário (string).
+nome: Nome do funcionário (string).
+data_nascimento: Data de nascimento do funcionário (string).
+endereco: Objeto contendo endereço do funcionário (objeto).
+logradouro: Logradouro do endereço (string).
+bairro: Bairro do endereço (string).
+cidade: Cidade do endereço (string).
+estado: Estado do endereço (string).
+cep: CEP do endereço (string).
+departamento_setor: Departamento ou setor do funcionário (string).
+telefone_contato: Telefone de contato do funcionário (string).
+email: E-mail do funcionário (string).
+salario: Salário do funcionário (float).
+beneficios: Lista de benefícios do funcionário (lista de strings).
+cargo: Cargo do funcionário (string).
+status_funcionario: Status do funcionário (string).
+
+7. Considerações
+
+Certifique-se de que o MongoDB esteja em execução antes de iniciar o aplicativo.
+A string de conexão do MongoDB está configurada para uma instância local (mongodb://localhost:27017/). Ajuste-a se necessário.
+O aplicativo valida se os campos CPF, Nome, Departamento/Setor e Telefone de Contato estão preenchidos antes de salvar os dados.
