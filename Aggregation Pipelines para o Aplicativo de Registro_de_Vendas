@@ -1,0 +1,179 @@
+Aggregation Pipelines para o Aplicativo de Registro de Vendas
+1. Obter Todas as Vendas de um Determinado Dia
+
+Este pipeline retorna todas as vendas realizadas em um determinado dia.
+
+[
+  {
+    $match: {
+      $expr: {
+        $eq: [
+          { $substr: ["$data_hora_venda", 0, 10] }, // Extrai a data (YYYY-MM-DD)
+          "2024-07-27" // Substitua pela data desejada
+        ]
+      }
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      data_hora_venda: 1,
+      descricao: 1,
+      quantidade: 1,
+      valor_venda: 1,
+      metodo_pagamento: 1,
+      unidade: 1,
+      valor_custo: 1,
+      grupo_produto: 1,
+      fornecedor: 1,
+      nome_funcionario: 1,
+      loja: 1,
+      status_venda: 1
+    }
+  }
+]
+
+2. Calcular o Total de Vendas por Método de Pagamento
+
+Este pipeline calcula o valor total de vendas para cada método de pagamento.
+
+[
+  {
+    $group: {
+      _id: "$metodo_pagamento",
+      total_vendas: { $sum: { $toDouble: "$valor_venda" } } // Converte para número e soma
+    }
+  },
+  {
+    $project: {
+      metodo_pagamento: "$_id",
+      total_vendas: 1,
+      _id: 0
+    }
+  }
+]
+
+3. Listar Vendas por Funcionário
+
+Este pipeline retorna todas as vendas realizadas por um determinado funcionário.
+
+[
+  {
+    $match: {
+      nome_funcionario: "Nome do Funcionário" // Substitua pelo nome desejado
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      data_hora_venda: 1,
+      descricao: 1,
+      quantidade: 1,
+      valor_venda: 1,
+      metodo_pagamento: 1,
+      unidade: 1,
+      valor_custo: 1,
+      grupo_produto: 1,
+      fornecedor: 1,
+      nome_funcionario: 1,
+      loja: 1,
+      status_venda: 1
+    }
+  }
+]
+
+4. Calcular o Valor Total de Vendas por Loja
+
+Este pipeline calcula o valor total de vendas para cada loja.
+
+[
+  {
+    $group: {
+      _id: "$loja",
+      total_vendas: { $sum: { $toDouble: "$valor_venda" } }
+    }
+  },
+  {
+    $project: {
+      loja: "$_id",
+      total_vendas: 1,
+      _id: 0
+    }
+  }
+]
+
+5. Listar Vendas por Grupo de Produto
+
+Este pipeline retorna todas as vendas de um determinado grupo de produto.
+
+[
+  {
+    $match: {
+      grupo_produto: "Nome do Grupo" // Substitua pelo nome do grupo desejado
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      data_hora_venda: 1,
+      descricao: 1,
+      quantidade: 1,
+      valor_venda: 1,
+      metodo_pagamento: 1,
+      unidade: 1,
+      valor_custo: 1,
+      grupo_produto: 1,
+      fornecedor: 1,
+      nome_funcionario: 1,
+      loja: 1,
+      status_venda: 1
+    }
+  }
+]
+
+6. Calcular o Valor Total de Custo por Fornecedor
+
+Este pipeline calcula o valor total de custo dos produtos fornecidos por cada fornecedor.
+
+[
+  {
+    $group: {
+      _id: "$fornecedor",
+      total_custo: { $sum: { $toDouble: "$valor_custo" } }
+    }
+  },
+  {
+    $project: {
+      fornecedor: "$_id",
+      total_custo: 1,
+      _id: 0
+    }
+  }
+]
+
+Como Usar os Pipelines
+
+1.Conecte-se ao MongoDB: Utilize um cliente MongoDB (como o MongoDB Compass ou o shell mongo).
+2. Selecione o Banco de Dados e Coleção: Escolha o banco de dados vendas e a coleção registros_vendas.
+3. Execute o Pipeline: Utilize o método aggregate() para executar o pipeline desejado.
+
+Exemplo no MongoDB Compass:
+
+1. Abra o MongoDB Compass e conecte-se ao seu servidor MongoDB.
+2. Selecione o banco de dados vendas e a coleção registros_vendas.
+3. Vá para a aba "Aggregation".
+4. Cole o pipeline desejado na área de edição.
+5. Clique em "Run".
+
+Exemplo no Shell mongo:
+
+1. Abra o terminal e conecte-se ao MongoDB: mongo
+2. Use o banco de dados vendas: use vendas
+3. Execute o pipeline:
+
+db.registros_vendas.aggregate([
+  // Cole o pipeline aqui
+])
+
+Estes pipelines fornecem uma base para consultas e análises dos dados de vendas. Você pode adaptá-los e combiná-los para criar consultas mais complexas de acordo com suas necessidades.
+
