@@ -1,0 +1,102 @@
+Documentação da API de Vendas
+Esta documentação descreve como usar a API de vendas construída com FastAPI, que se conecta a um banco de dados MongoDB para recuperar informações de registros de vendas.
+
+Pré-requisitos
+
+Python 3.7+
+MongoDB instalado e em execução
+Pip (gerenciador de pacotes do Python)
+Instalação
+
+Clone o repositório ou baixe os arquivos da API.
+
+Crie um ambiente virtual (recomendado):
+
+python3 -m venv venv
+source venv/bin/activate # No Linux/macOS
+venv\Scripts\activate # No Windows
+
+Instale as dependências:
+
+pip install fastapi pymongo pydantic uvicorn
+
+Certifique-se de que o MongoDB esteja em execução na porta padrão (27017) ou ajuste a string de conexão no código (mongodb://localhost:27017/).
+
+Executando a API
+
+Navegue até o diretório onde o arquivo main.py está localizado.
+
+Execute o servidor Uvicorn:
+
+uvicorn main:app --reload
+
+A API estará disponível em http://127.0.0.1:8000.
+
+Endpoints
+
+1. Raiz (/)
+
+Método: GET
+
+Descrição: Retorna uma mensagem de boas-vindas.
+
+Resposta:
+
+{
+    "message": "Bem-vindo à API de vendas!"
+}
+
+Obter Registros de Vendas (/registros_vendas/)
+
+Método: GET
+
+Descrição: Retorna uma lista de todos os registros de vendas do banco de dados MongoDB.
+
+Resposta: Uma lista de objetos RegistroVenda em formato JSON.
+
+[
+    {
+        "_id": "id_do_registro",
+        "descricao": "Descrição do produto",
+        "quantidade": 10,
+        "valor_venda": 34.00,
+        "metodo_pagamento": "Cartão",
+        "unidade": "Unidades",
+        "valor_custo": 3.00,
+        "grupo_produto": "Bebidas",
+        "fornecedor": "Fornecedor XYZ",
+        "nome_funcionario": "Funcionário ABC",
+        "loja": "Loja 01",
+        "status_venda": "Concluída",
+        "data_hora_venda": "2024-07-27T10:00:00"
+    },
+    // ... mais registros
+]
+
+Modelo de Dados (RegistroVenda)
+
+O modelo de dados RegistroVenda define a estrutura dos registros de vendas retornados pela API.
+
+_id: ID do registro (string).
+descricao: Descrição do produto (string).
+quantidade: Quantidade vendida (inteiro).
+valor_venda: Valor da venda (float).
+metodo_pagamento: Método de pagamento (string).
+unidade: Unidade de medida (string).
+valor_custo: Valor de custo (float).
+grupo_produto: Grupo do produto (string).
+fornecedor: Fornecedor do produto (string).
+nome_funcionario: Nome do funcionário que realizou a venda (string).
+loja: Loja onde a venda foi realizada (string).
+status_venda: Status da venda (string).
+data_hora_venda: Data e hora da venda (string).
+Testando a API
+
+Abra um navegador ou use uma ferramenta como Postman.
+Acesse http://127.0.0.1:8000/registros_vendas/ para obter os registros de vendas.
+Acesse http://127.0.0.1:8000/ para ver a mensagem de boas-vindas.
+Considerações
+
+Certifique-se de que o banco de dados MongoDB esteja preenchido com dados de vendas para que a API retorne resultados.
+A API está configurada para se conectar ao MongoDB em execução localmente na porta padrão. Se necessário, ajuste a string de conexão no código.
+Para implantação em produção, considere usar um servidor web mais robusto como Nginx ou Apache em conjunto com Uvicorn.
