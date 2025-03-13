@@ -1,0 +1,99 @@
+Documentação do Aplicativo de Registro de Vendas
+Este documento descreve como configurar, executar e usar o aplicativo de registro de vendas desenvolvido em Python com interface gráfica Tkinter e armazenamento de dados no MongoDB.
+
+1. Visão Geral
+
+O aplicativo permite que os usuários registrem vendas de forma fácil e rápida através de uma interface gráfica. Os dados da venda são armazenados em um banco de dados MongoDB para posterior consulta e análise.
+
+2. Pré-requisitos
+
+Python 3.7+ instalado
+MongoDB instalado e em execução
+Pip (gerenciador de pacotes do Python)
+
+3. Instalação
+
+Clone o Repositório (ou Baixe os Arquivos)
+
+Se você tiver o código em um repositório Git, clone-o. Caso contrário, baixe os arquivos do projeto.
+
+Crie um Ambiente Virtual (Recomendado)
+
+python3 -m venv venv
+source venv/bin/activate  # No Linux/macOS
+venv\Scripts\activate  # No Windows
+
+Instale as Dependências
+
+pip install tkinter pymongo
+
+Certifique-se de que o MongoDB esteja em execução na porta padrão (27017)
+
+Caso contrário, ajuste a string de conexão no código (mongodb://localhost:27017/).
+
+4. Executando o Aplicativo
+
+Navegue até o diretório onde o arquivo do aplicativo está localizado.
+
+Execute o aplicativo Python:
+
+python nome_do_arquivo.py
+
+(Substitua nome_do_arquivo.py pelo nome do seu arquivo Python).
+
+5. Usando o Aplicativo
+
+Interface Gráfica
+
+Ao executar o aplicativo, uma janela com campos para inserir os dados da venda será exibida.
+
+Inserindo Dados
+
+Preencha os campos com as informações da venda:
+
+Descrição do Item
+Quantidade
+Valor de Venda
+Método de Pagamento (selecione na lista)
+Unidade do Item
+Valor de Custo
+Grupo do Produto
+Fornecedor
+Nome do Funcionário
+Loja da Venda
+Status da Venda (selecione na lista)
+Salvando a Venda
+
+Clique no botão "Salvar Venda" para registrar os dados no banco de dados MongoDB.
+
+Mensagens
+
+Sucesso: Uma mensagem de sucesso será exibida se os dados forem salvos corretamente.
+Erro: Uma mensagem de erro será exibida se houver algum problema ao salvar os dados ou se campos obrigatórios não forem preenchidos.
+Dados da Venda: Uma mensagem exibirá os dados salvos na tela.
+Limpar Campos
+
+Após salvar os dados, os campos serão automaticamente limpos para um novo registro.
+
+6. Estrutura do Banco de Dados MongoDB
+
+Os dados são armazenados no banco de dados vendas, na coleção registros_vendas. Cada registro de venda é um documento com os seguintes campos:
+
+data_hora_venda: Data e hora da venda (string).
+descricao: Descrição do item (string).
+quantidade: Quantidade vendida (string).
+valor_venda: Valor da venda (string).
+metodo_pagamento: Método de pagamento (string).
+unidade: Unidade do item (string).
+valor_custo: Valor de custo (string).
+grupo_produto: Grupo do produto (string).
+fornecedor: Fornecedor (string).
+nome_funcionario: Nome do funcionário (string).
+loja: Loja da venda (string).
+status_venda: Status da venda (string).
+7. Considerações
+
+Certifique-se de que o MongoDB esteja em execução antes de iniciar o aplicativo.
+A string de conexão do MongoDB está configurada para uma instância local (mongodb://localhost:27017/). Ajuste-a se necessário.
+O aplicativo valida se os campos Descrição, Quantidade e Valor de Venda estão preenchidos antes de salvar os dados.
+
