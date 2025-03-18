@@ -1,0 +1,48 @@
+from pymongo import MongoClient
+from bson.objectid import ObjectId
+import random
+from datetime import datetime, timedelta
+
+# Conectar ao MongoDB
+client = MongoClient("mongodb://localhost:27017/")
+db = client['vendas']
+colecao = db['registros_vendas']
+
+# Listas de valores possíveis para os registros
+produtos = ["PÃO DE QUEIJO", "CAFÉ EXPRESSO", "SUCO NATURAL", "SANDUÍCHE", "BOLINHO", "REFRIGERANTE"]
+metodos_pagamento = ["Crédito", "Débito", "Dinheiro", "Pix"]
+unidades = ["UN", "KG", "L"]
+grupos_produto = ["COMIDA", "BEBIDA", "DOCES"]
+fornecedores = ["INTERNO", "FORNECEDOR A", "FORNECEDOR B"]
+funcionarios = ["PAULO EDUARDO", "MARCELA SOUZA", "CARLOS FERREIRA", "ANA LIMA"]
+lojas = ["LOJA RODOVIA", "LOJA CENTRO", "LOJA SHOPPING"]
+status_vendas = ["Finalizada", "Pendente", "Cancelada"]
+
+# Gerar registros aleatórios
+def gerar_registros(quantidade):
+    registros = []
+    for _ in range(quantidade):
+        registro = {
+            "_id": ObjectId(),
+            "data_hora_venda": (datetime.now() - timedelta(days=random.randint(0, 30))).strftime("%Y-%m-%d %H:%M:%S"),
+            "descricao": random.choice(produtos),
+            "quantidade": str(random.randint(1, 20)),  # Quantidade entre 1 e 20
+            "valor_venda": "{:.2f}".format(random.uniform(5, 200)).replace(".", ","),  # Valor entre 5 e 200
+            "metodo_pagamento": random.choice(metodos_pagamento),
+            "unidade": random.choice(unidades),
+            "valor_custo": "{:.2f}".format(random.uniform(2, 100)).replace(".", ","),  # Custo aleatório
+            "grupo_produto": random.choice(grupos_produto),
+            "fornecedor": random.choice(fornecedores),
+            "nome_funcionario": random.choice(funcionarios),
+            "loja": random.choice(lojas),
+            "status_venda": random.choice(status_vendas)
+        }
+        registros.append(registro)
+    return registros
+
+# Inserir os dados no MongoDB
+quantidade_registros = 1000  # Número de registros a serem gerados
+dados = gerar_registros(quantidade_registros)
+colecao.insert_many(dados)
+
+print(f"{quantidade_registros} registros inseridos com sucesso no MongoDB!")
