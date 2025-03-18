@@ -1,6 +1,15 @@
-# Criação de índices na API de vendas para melhorar performance
-colecao.create_index([("data_hora_venda", -1)])  # Índice ordenação de vendas mais recentes primeiro
-colecao.create_index([("nome_funcionario", 1)])  # Índice consultas por funcionário
-colecao.create_index([("loja", 1), ("status_venda", 1)])  # Índice composto (loja + status da venda)
-colecao.create_index([("grupo_produto", 1)])  # Índice agrupar por tipo de produto
-colecao.create_index([("metodo_pagamento", 1)])  # Índice consultas por tipo de pagamento
+from pymongo import MongoClient
+
+# Conectar ao MongoDB
+client = MongoClient("mongodb://localhost:27017/")  # Ajuste conforme necessário
+db = client['vendas']  # Nome do banco de dados
+colecao = db['registros_vendas']  # Nome da coleção
+
+# Criando índices no MongoDB para melhorar a performance das consultas
+colecao.create_index([("data_hora_venda", -1)])  # Ordenação por vendas mais recentes
+colecao.create_index([("nome_funcionario", 1)])  # Consulta por funcionário
+colecao.create_index([("loja", 1), ("status_venda", 1)])  # Índice composto loja + status
+colecao.create_index([("grupo_produto", 1)])  # Índice por grupo de produto
+colecao.create_index([("metodo_pagamento", 1)])  # Indice por tipo de pagamento
+
+print("Índices criados com sucesso!")
