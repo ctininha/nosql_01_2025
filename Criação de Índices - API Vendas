@@ -1,0 +1,6 @@
+# Criação de índices na API de vendas para melhorar performance
+colecao.create_index([("data_hora_venda", -1)])  # Índice ordenação de vendas mais recentes primeiro
+colecao.create_index([("nome_funcionario", 1)])  # Índice consultas por funcionário
+colecao.create_index([("loja", 1), ("status_venda", 1)])  # Índice composto (loja + status da venda)
+colecao.create_index([("grupo_produto", 1)])  # Índice agrupar por tipo de produto
+colecao.create_index([("metodo_pagamento", 1)])  # Índice consultas por tipo de pagamento
