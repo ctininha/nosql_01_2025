@@ -17,27 +17,33 @@ script_pf_add_coupon = r.register_script("""
     return resultado
 """)
 
+
 # Função para salvar dados no Redis com Bloom Filter para cupons
 def salvar_no_banco(dados_venda, cupom):
     try:
-        # Gerar uma chave única para o registro
-        chave_venda = f"venda:{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
-
-        # Salvar os dados como um hash no Redis
-        r.hset(chave_venda, mapping=dados_venda)
-
         # Usar Bloom Filter para verificar se o cupom já foi usado
         chave_bloom_cupons = "cupons_usados"
         cupom_ja_usado = script_pf_add_coupon(keys=[chave_bloom_cupons], args=[cupom])
-        
-        if cupom_ja_usado:
-            messagebox.showinfo("Sucesso", "Venda e cupom registrados com sucesso!")
+
+        if cupom_ja_usado:  # Se o cupom não foi usado
+            # Gerar uma chave única para o registro
+            chave_venda = f"venda:{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
+            # Salvar os dados como um hash no Redis
+            r.hset(chave_venda, mapping=dados_venda)
+            return True  # Retorna verdadeiro para indicar sucesso
         else:
-            messagebox.showerror("Erro", "Cupom já utilizado!")
+            return False  # Retorna falso para indicar falha (cupom já usado)
 
+    except redis.exceptions.RedisError as e:
+        # Captura erros específicos do Redis e os trata
+        print(f"Erro do Redis ao salvar dados: {e}")  # Log para o desenvolvedor
+        messagebox.showerror("Erro", "Ocorreu um erro ao salvar os dados. Por favor, tente novamente.")
+        return False  # Retorna falso para indicar falha
     except Exception as e:
-        messagebox.showerror("Erro", f"Erro ao salvar no Redis: {e}")
-
+        # Captura outros erros gerais
+        print(f"Erro inesperado ao salvar dados: {e}")  # Log para o desenvolvedor
+        messagebox.showerror("Erro", "Ocorreu um erro inesperado. Por favor, tente novamente.")
+        return False  # Retorna falso em caso de erro
 
 
 # Função para exibir os dados inseridos e salvar no Redis
@@ -55,7 +61,7 @@ def exibir_dados():
         nome_funcionario = nome_funcionario_entry.get()
         loja = loja_entry.get()
         status_venda = status_venda_combobox.get()
-        cupom = cupom_entry.get() # Novo campo para o cupom
+        cupom = cupom_entry.get()  # Novo campo para o cupom
 
         # Validar se os campos obrigatórios estão preenchidos
         if not descricao or not quantidade or not valor_venda:
@@ -80,30 +86,35 @@ def exibir_dados():
         }
 
         # Salvar dados no Redis com Bloom Filter para cupons
-        salvar_no_banco(dados_venda, cupom)
+        salvou_com_sucesso = salvar_no_banco(dados_venda, cupom)  # Captura o retorno da função
 
-        # Exibir os dados na tela
-        dados_venda_texto = f""" "VENDA REALIZADA"\n
-        Data e Hora da Venda: {data_hora_venda}\n
-        Descrição: {descricao}
-        Quantidade: {quantidade}
-        Valor de Venda: {valor_venda}
-        Método de Pagamento: {metodo_pagamento}
-        Unidade: {unidade}
-        Valor de Custo: {valor_custo}
-        Grupo do Produto: {grupo_produto}
-        Fornecedor: {fornecedor}
-        Nome do Funcionário: {nome_funcionario}
-        Loja: {loja}
-        Status da Venda: {status_venda}
-        Cupom: {cupom}
-        """
+        if salvou_com_sucesso:
+            # Exibir os dados na tela
+            dados_venda_texto = f""" "VENDA REALIZADA"\n
+            Data e Hora da Venda: {data_hora_venda}\n
+            Descrição: {descricao}
+            Quantidade: {quantidade}
+            Valor de Venda: {valor_venda}
+            Método de Pagamento: {metodo_pagamento}
+            Unidade: {unidade}
+            Valor de Custo: {valor_custo}
+            Grupo do Produto: {grupo_produto}
+            Fornecedor: {fornecedor}
+            Nome do Funcionário: {nome_funcionario}
+            Loja: {loja}
+            Status da Venda: {status_venda}
+            Cupom: {cupom}
+            """
 
-        messagebox.showinfo("Dados da Venda", dados_venda_texto)
-        limpar_campos()
+            messagebox.showinfo("Dados da Venda", dados_venda_texto)
+            limpar_campos()
+        else:
+            messagebox.showerror("Erro", "Este cupom já foi utilizado. A venda não foi registada.")
+
 
     except Exception as e:
-        messagebox.showerror("Erro", f"Ocorreu um erro ao exibir os dados: {e}")
+        print(f"Erro inesperado ao exibir os dados: {e}")  # Log para o desenvolvedor
+        messagebox.showerror("Erro", "Ocorreu um erro inesperado. Por favor, tente novamente.")
 
 
 # Função para limpar os campos após o registro
@@ -119,8 +130,7 @@ def limpar_campos():
     nome_funcionario_entry.delete(0, tk.END)
     loja_entry.delete(0, tk.END)
     status_venda_combobox.set("")
-    cupom_entry.delete(0, tk.END) # Limpar o campo do cupom
-
+    cupom_entry.delete(0, tk.END)  # Limpar o campo do cupom
 
 
 # Criando a interface gráfica
@@ -131,7 +141,7 @@ try:
     tk.Label(root, text="").pack()  # Linha em branco
 
     root.title("Auto Posto Trevão - Registro das Vendas")
-    root.geometry("400x700") # Aumentar a altura da janela
+    root.geometry("400x700")  # Aumentar a altura da janela
 
     # Labels e Campos de Entrada
     tk.Label(root, text="Descrição do Item:").pack()
@@ -178,10 +188,9 @@ try:
     status_venda_combobox = ttk.Combobox(root, values=["Finalizada", "Cancelada", "Pendente"])
     status_venda_combobox.pack()
 
-    tk.Label(root, text="Cupom:").pack() # Novo campo para Cupom
+    tk.Label(root, text="Cupom:").pack()  # Novo campo para Cupom
     cupom_entry = tk.Entry(root)
     cupom_entry.pack()
-
 
     # Adiciona duas linhas em branco
     tk.Label(root, text="").pack()  # Primeira linha em branco
