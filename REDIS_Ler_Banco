@@ -1,0 +1,16 @@
+import redis
+
+# Conectar ao Redis
+r = redis.Redis(host='localhost', port=6379, db=0)
+
+# Ler todos os registros do Redis
+registros = []
+for chave in r.keys("venda:*"):
+    registro = r.hgetall(chave)
+    # Decodificar os valores bytes para strings
+    registro = {k.decode(): v.decode() for k, v in registro.items()}
+    registros.append(registro)
+
+# Exibir os dados encontrados
+for registro in registros:
+    print(registro)
