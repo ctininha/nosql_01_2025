@@ -1,4 +1,5 @@
 # Clientes Únicos por Período: O HyperLogLog será usado para contar o número de clientes distintos que fizeram compras diárias, semanais ou mensais.
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
@@ -16,14 +17,15 @@ script_pf_add_coupon = r.register_script("""
     return resultado
 """)
 
+
 # Função para salvar dados no Redis com Bloom Filter para cupons e HyperLogLog para clientes únicos
 def salvar_no_banco(dados_venda, cupom, cliente_id):
     try:
         # Usar Bloom Filter para verificar se o cupom já foi usado
         chave_bloom_cupons = "cupons_usados"
         cupom_ja_usado = script_pf_add_coupon(keys=[chave_bloom_cupons], args=[cupom])
-        
-        if cupom_ja_usado: # Se o cupom não foi usado
+
+        if cupom_ja_usado:  # Se o cupom não foi usado
             # Gerar uma chave única para o registro
             chave_venda = f"venda:{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
             # Salvar os dados como um hash no Redis
@@ -33,21 +35,20 @@ def salvar_no_banco(dados_venda, cupom, cliente_id):
             chave_hll_clientes = f"clientes_unicos:{datetime.now().strftime('%Y%m%d')}"
             r.pfadd(chave_hll_clientes, cliente_id)
 
-            return True # Retorna verdadeiro para indicar sucesso
+            return True  # Retorna verdadeiro para indicar sucesso
         else:
-            return False # Retorna falso para indicar falha (cupom já usado)
+            return False  # Retorna falso para indicar falha (cupom já usado)
 
     except redis.exceptions.RedisError as e:
         # Captura erros específicos do Redis e os trata
         print(f"Erro do Redis ao salvar dados: {e}")  # Log para o desenvolvedor
         messagebox.showerror("Erro", "Ocorreu um erro ao salvar os dados. Por favor, tente novamente.")
-        return False # Retorna falso para indicar falha
+        return False  # Retorna falso para indicar falha
     except Exception as e:
         # Captura outros erros gerais
         print(f"Erro inesperado ao salvar dados: {e}")  # Log para o desenvolvedor
         messagebox.showerror("Erro", "Ocorreu um erro inesperado. Por favor, tente novamente.")
-        return False # Retorna falso em caso de erro
-
+        return False  # Retorna falso em caso de erro
 
 
 # Função para exibir os dados inseridos e salvar no Redis
@@ -65,12 +66,13 @@ def exibir_dados():
         nome_funcionario = nome_funcionario_entry.get()
         loja = loja_entry.get()
         status_venda = status_venda_combobox.get()
-        cupom = cupom_entry.get() # Novo campo para o cupom
+        cupom = cupom_entry.get()  # Novo campo para o cupom
         cliente_id = cliente_id_entry.get()  # Novo campo para o ID do cliente
 
         # Validar se os campos obrigatórios estão preenchidos
         if not descricao or not quantidade or not valor_venda or not cliente_id:
-            messagebox.showerror("Erro", "Os campos Descrição, Quantidade, Valor de Venda e Cliente ID são obrigatórios.")
+            messagebox.showerror("Erro",
+                                 "Os campos Descrição, Quantidade, Valor de Venda e Cliente ID são obrigatórios.")
             return
 
         # Criando o dicionário de dados para ser salvo no Redis
@@ -92,7 +94,7 @@ def exibir_dados():
         }
 
         # Salvar dados no Redis com Bloom Filter para cupons e HyperLogLog para clientes
-        salvou_com_sucesso = salvar_no_banco(dados_venda, cupom, cliente_id) # Captura o retorno da função
+        salvou_com_sucesso = salvar_no_banco(dados_venda, cupom, cliente_id)  # Captura o retorno da função
 
         if salvou_com_sucesso:
             # Exibir os dados na tela
@@ -115,21 +117,22 @@ def exibir_dados():
 
             messagebox.showinfo("Dados da Venda", dados_venda_texto)
             limpar_campos()
-            exibir_contagem_clientes_unicos() # Exibe a contagem de clientes únicos
+            exibir_contagem_clientes_unicos()  # Exibe a contagem de clientes únicos
         else:
             messagebox.showerror("Erro", "Este cupom já foi utilizado. A venda não foi registada.")
-
 
     except Exception as e:
         print(f"Erro inesperado ao exibir os dados: {e}")  # Log para o desenvolvedor
         messagebox.showerror("Erro", "Ocorreu um erro inesperado. Por favor, tente novamente.")
+
 
 def exibir_contagem_clientes_unicos():
     try:
         data_atual = datetime.now().strftime('%Y%m%d')
         chave_hll_clientes = f"clientes_unicos:{data_atual}"
         contagem_clientes_unicos = r.pfcount(chave_hll_clientes)
-        messagebox.showinfo("Contagem de Clientes Únicos", f"Número de clientes únicos hoje: {contagem_clientes_unicos}")
+        messagebox.showinfo("Contagem de Clientes Únicos",
+                            f"Número de clientes únicos hoje: {contagem_clientes_unicos}")
     except redis.exceptions.RedisError as e:
         print(f"Erro ao obter contagem de clientes únicos: {e}")
         messagebox.showerror("Erro", "Erro ao obter contagem de clientes únicos.")
@@ -151,8 +154,9 @@ def limpar_campos():
     nome_funcionario_entry.delete(0, tk.END)
     loja_entry.delete(0, tk.END)
     status_venda_combobox.set("")
-    cupom_entry.delete(0, tk.END) # Limpar o campo do cupom
+    cupom_entry.delete(0, tk.END)  # Limpar o campo do cupom
     cliente_id_entry.delete(0, tk.END)
+
 
 # Criando a interface gráfica
 try:
@@ -162,7 +166,7 @@ try:
     tk.Label(root, text="").pack()  # Linha em branco
 
     root.title("Auto Posto Trevão - Registro das Vendas")
-    root.geometry("400x750") # Aumentar a altura da janela
+    root.geometry("400x750")  # Aumentar a altura da janela
 
     # Labels e Campos de Entrada
     tk.Label(root, text="Descrição do Item:").pack()
@@ -209,14 +213,13 @@ try:
     status_venda_combobox = ttk.Combobox(root, values=["Finalizada", "Cancelada", "Pendente"])
     status_venda_combobox.pack()
 
-    tk.Label(root, text="Cupom:").pack() # Novo campo para Cupom
+    tk.Label(root, text="Cupom:").pack()  # Novo campo para Cupom
     cupom_entry = tk.Entry(root)
     cupom_entry.pack()
 
     tk.Label(root, text="Cliente ID:").pack()  # Novo campo para Cliente ID
     cliente_id_entry = tk.Entry(root)
     cliente_id_entry.pack()
-
 
     # Adiciona duas linhas em branco
     tk.Label(root, text="").pack()  # Primeira linha em branco
