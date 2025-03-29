@@ -1,22 +1,25 @@
 # Prevenção de Duplicidade de Cupons: O Bloom Filter será usado para verificar se um cupom já foi aplicado a uma venda, evitando vendas fraudulentos.
 
+import os
 import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
 import redis
 from redis.commands.core import Script
 
+# Suprimir aviso de depreciação do Tk
+os.environ['TK_SILENCE_DEPRECATION'] = '1'
+
 # Conectar ao Redis
 r = redis.Redis(host='localhost', port=6379, db=0)
 
 # Carregar o script Lua para adicionar o cupom usando Bloom Filter
 script_pf_add_coupon = r.register_script("""
-    local chave_bloom = KEYS[1]
-    local cupom = ARGV[1]
-    local resultado = redis.call('BF.ADD', chave_bloom, cupom)
-    return resultado
+local chave_bloom = KEYS[1]
+local cupom = ARGV[1]
+local resultado = redis.call('BF.ADD', chave_bloom, cupom)
+return resultado
 """)
-
 
 # Função para salvar dados no Redis com Bloom Filter para cupons
 def salvar_no_banco(dados_venda, cupom):
@@ -44,7 +47,6 @@ def salvar_no_banco(dados_venda, cupom):
         print(f"Erro inesperado ao salvar dados: {e}")  # Log para o desenvolvedor
         messagebox.showerror("Erro", "Ocorreu um erro inesperado. Por favor, tente novamente.")
         return False  # Retorna falso em caso de erro
-
 
 # Função para exibir os dados inseridos e salvar no Redis
 def exibir_dados():
@@ -91,31 +93,28 @@ def exibir_dados():
         if salvou_com_sucesso:
             # Exibir os dados na tela
             dados_venda_texto = f""" "VENDA REALIZADA"\n
-            Data e Hora da Venda: {data_hora_venda}\n
-            Descrição: {descricao}
-            Quantidade: {quantidade}
-            Valor de Venda: {valor_venda}
-            Método de Pagamento: {metodo_pagamento}
-            Unidade: {unidade}
-            Valor de Custo: {valor_custo}
-            Grupo do Produto: {grupo_produto}
-            Fornecedor: {fornecedor}
-            Nome do Funcionário: {nome_funcionario}
-            Loja: {loja}
-            Status da Venda: {status_venda}
-            Cupom: {cupom}
-            """
-
+Data e Hora da Venda: {data_hora_venda}\n
+Descrição: {descricao}
+Quantidade: {quantidade}
+Valor de Venda: {valor_venda}
+Método de Pagamento: {metodo_pagamento}
+Unidade: {unidade}
+Valor de Custo: {valor_custo}
+Grupo do Produto: {grupo_produto}
+Fornecedor: {fornecedor}
+Nome do Funcionário: {nome_funcionario}
+Loja: {loja}
+Status da Venda: {status_venda}
+Cupom: {cupom}
+"""
             messagebox.showinfo("Dados da Venda", dados_venda_texto)
             limpar_campos()
         else:
             messagebox.showerror("Erro", "Este cupom já foi utilizado. A venda não foi registada.")
 
-
     except Exception as e:
         print(f"Erro inesperado ao exibir os dados: {e}")  # Log para o desenvolvedor
         messagebox.showerror("Erro", "Ocorreu um erro inesperado. Por favor, tente novamente.")
-
 
 # Função para limpar os campos após o registro
 def limpar_campos():
@@ -131,7 +130,6 @@ def limpar_campos():
     loja_entry.delete(0, tk.END)
     status_venda_combobox.set("")
     cupom_entry.delete(0, tk.END)  # Limpar o campo do cupom
-
 
 # Criando a interface gráfica
 try:
