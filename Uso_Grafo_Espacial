@@ -1,0 +1,124 @@
+import networkx as nx
+import numpy as np
+from scipy.spatial.distance import euclidean
+import matplotlib.pyplot as plt
+import geopandas as gpd
+
+def analisar_grafo_espacial_espectral(dados_espaciais):
+    """
+    Realiza análise de grafos espacial e espectral em dados com posições.
+
+    Args:
+        dados_espaciais: Uma lista de dicionários, onde cada dicionário representa um nó
+                         e contém um 'id' e uma tupla 'pos' com as coordenadas (x, y)
+                         ou (longitude, latitude). Ex: [{'id': 0, 'pos': (1, 2)}, ...]
+                         Se os dados forem geográficos, as coordenadas devem ser consistentes.
+
+    Returns:
+        Um dicionário contendo os resultados da análise:
+        - 'spatial_closeness': Centralidade de proximidade espacial dos nós.
+        - 'degree_centrality': Centralidade de grau dos nós.
+        - 'betweenness_centrality': Centralidade de intermediação dos nós.
+        - 'eigenvector_centrality': centralidade de autovetor dos nós.
+        - 'laplacian_eigenvalues': Autovalores da matriz Laplaciana.
+        - 'fiedler_vector': Fiedler vector do grafo.
+        - 'partition': Partição do grafo baseada no sinal do Fiedler vector.
+        - 'graph': O objeto do grafo NetworkX criado.
+        - 'positions': As posições dos nós.
+    """
+    G = nx.Graph()
+    pos = {}
+    for node_data in dados_espaciais:
+        node_id = node_data['id']
+        position = node_data['pos']
+        G.add_node(node_id)
+        pos[node_id] = position
+
+    nx.set_node_attributes(G, pos, 'pos')
+
+    # Conectar nós baseados na proximidade espacial (exemplo: distância < 5 unidades)
+    dist_threshold = 5
+    nodes = list(G.nodes())
+    for i in range(len(nodes)):
+        for j in range(i + 1, len(nodes)):
+            pos_i = G.nodes[nodes[i]]['pos']
+            pos_j = G.nodes[nodes[j]]['pos']
+            distance = euclidean(pos_i, pos_j)
+            if distance < dist_threshold:
+                G.add_edge(nodes[i], nodes[j], weight=distance)
+
+    # Centralidade de Proximidade Espacial
+    def spatial_closeness_centrality(graph, pos_attr='pos'):
+        centrality = {}
+        nodes_list = list(graph.nodes())
+        for i in range(len(nodes_list)):
+            total_spatial_distance = 0
+            for j in range(len(nodes_list)):
+                if i != j:
+                    pos_i = graph.nodes[nodes_list[i]][pos_attr]
+                    pos_j = graph.nodes[nodes_list[j]][pos_attr]
+                    distance = euclidean(pos_i, pos_j)
+                    total_spatial_distance += distance
+            if total_spatial_distance > 0:
+                centrality[nodes_list[i]] = 1 / total_spatial_distance
+            else:
+                centrality[nodes_list[i]] = 0
+        return centrality
+
+    spatial_closeness = spatial_closeness_centrality(G)
+    degree_centrality = nx.degree_centrality(G)
+    betweenness_centrality = nx.betweenness_centrality(G)
+    eigenvector_centrality = nx.eigenvector_centrality(G, weight='weight')
+
+    # Análise Espectral (Matriz Laplaciana e Fiedler Vector)
+    L = nx.laplacian_matrix(G, weight='weight').toarray()
+    eigenvalues, eigenvectors = np.linalg.eig(L)
+    eigenvalues = np.sort(eigenvalues)
+    fiedler_vector = eigenvectors[:, np.argsort(eigenvalues)[1]]
+    partition = {node: 'A' if fiedler_vector[i] > 0 else 'B' for i, node in enumerate(G.nodes())}
+
+    resultados = {
+        'spatial_closeness': spatial_closeness,
+        'degree_centrality': degree_centrality,
+        'betweenness_centrality': betweenness_centrality,
+        'eigenvector_centrality': eigenvector_centrality,
+        'laplacian_eigenvalues': eigenvalues.tolist(),
+        'fiedler_vector': fiedler_vector.tolist(),
+        'partition': partition,
+        'graph': G,
+        'positions': pos
+    }
+
+    return resultados
+
+# Exemplo de dados espaciais (substitua pelos seus dados de Uberlândia)
+dados_uberlandia = [
+    {'id': 'A', 'pos': (-18.91, -48.26)},  # Exemplo de coordenadas (lat, lon)
+    {'id': 'B', 'pos': (-18.92, -48.27)},
+    {'id': 'C', 'pos': (-18.90, -48.25)},
+    {'id': 'D', 'pos': (-18.93, -48.28)},
+    {'id': 'E', 'pos': (-18.915, -48.265)},
+    {'id': 'F', 'pos': (-18.905, -48.275)},
+]
+
+# Executar a análise
+resultados_analise = analisar_grafo_espacial_espectral(dados_uberlandia)
+
+# Imprimir os resultados
+print("Centralidade de Proximidade Espacial:", resultados_analise['spatial_closeness'])
+print("Centralidade de Grau:", resultados_analise['degree_centrality'])
+print("Centralidade de Intermediação:", resultados_analise['betweenness_centrality'])
+print("Centralidade de Autovetor:", resultados_analise['eigenvector_centrality'])
+print("Autovalores da Matriz Laplaciana:", resultados_analise['laplacian_eigenvalues'])
+print("Fiedler Vector:", resultados_analise['fiedler_vector'])
+print("Partição do Grafo:", resultados_analise['partition'])
+
+# Visualizar o grafo com as posições e a partição
+plt.figure(figsize=(10, 6))
+partition_colors = [resultados_analise['partition'][node] for node in resultados_analise['graph'].nodes()]
+color_map = {'A': 'lightblue', 'B': 'salmon'}
+node_colors = [color_map[color] for color in partition_colors]
+nx.draw(resultados_analise['graph'], resultados_analise['positions'], with_labels=True,
+        node_color=node_colors, node_size=800, cmap=plt.cm.get_cmap('coolwarm'), font_size=10)
+plt.title("Grafo Espacial de Uberlândia com Partição (Fiedler Vector)")
+plt.show()
