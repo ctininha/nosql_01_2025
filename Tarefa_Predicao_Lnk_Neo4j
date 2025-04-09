@@ -1,0 +1,97 @@
+from neo4j import GraphDatabase
+from collections import defaultdict
+
+# Configurações de conexão com o Neo4j
+URI = "bolt://localhost:7687"
+USER = "neo4j"
+PASSWORD = "password"
+
+def conectar_neo4j():
+    """Cria e retorna um driver de conexão com o Neo4j."""
+    try:
+        driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
+        return driver
+    except Exception as e:
+        print(f"Erro ao conectar ao Neo4j: {e}")
+        return None
+
+def fechar_conexao(driver):
+    """Fecha a conexão com o Neo4j."""
+    if driver:
+        driver.close()
+
+def get_compras_cliente(tx, cliente_nome):
+    """Retorna os itens comprados por um cliente específico."""
+    query = """
+    MATCH (c:Cliente {nome: $cliente_nome})<-[:PERTENCE_A_CLIENTE]-(v:Venda)
+    RETURN v.descricao AS item
+    """
+    result = tx.run(query, cliente_nome=cliente_nome)
+    return [record["item"] for record in result]
+
+def get_compras_outros_clientes(tx, cliente_nome):
+    """Retorna um dicionário onde as chaves são clientes (exceto o cliente alvo)
+    e os valores são listas dos itens que eles compraram."""
+    query = """
+    MATCH (c:Cliente)<-[:PERTENCE_A_CLIENTE]-(v:Venda)
+    WHERE c.nome <> $cliente_nome
+    RETURN c.nome AS cliente, collect(v.descricao) AS itens
+    """
+    result = tx.run(query, cliente_nome=cliente_nome)
+    compras = {}
+    for record in result:
+        compras[record["cliente"]] = record["itens"]
+    return compras
+
+def recomendar_produtos(cliente_atual_itens, compras_outros):
+    """Recomenda produtos para o cliente atual com base nas compras de outros."""
+    item_coocorrencia = defaultdict(int)
+    for item_cliente in cliente_atual_itens:
+        for cliente, itens_comprados in compras_outros.items():
+            if item_cliente in itens_comprados:
+                for outro_item in itens_comprados:
+                    if outro_item != item_cliente:
+                        item_coocorrencia[outro_item] += 1
+
+    # Ordena os itens por frequência de coocorrência
+    recomendacoes = sorted(item_coocorrencia.items(), key=lambda item: item[1], reverse=True)
+    return [item for item, freq in recomendacoes]
+
+def main():
+    driver = conectar_neo4j()
+    if not driver:
+        return
+
+    try:
+        with driver.session() as session:
+            cliente_novo_nome = input("Digite o nome do novo cliente para gerar recomendações: ")
+            compras_cliente_novo = session.execute_read(get_compras_cliente, cliente_nome=cliente_novo_nome)
+
+            if not compras_cliente_novo:
+                print(f"Não foram encontradas compras para o cliente '{cliente_novo_nome}'.")
+                return
+
+            print(f"\nItens que '{cliente_novo_nome}' comprou:")
+            for item in compras_cliente_novo:
+                print(f"- {item}")
+
+            compras_outros = session.execute_read(get_compras_outros_clientes, cliente_nome=cliente_novo_nome)
+
+            if not compras_outros:
+                print("Não há dados de compra de outros clientes para gerar recomendações.")
+                return
+
+            recomendacoes = recomendar_produtos(compras_cliente_novo, compras_outros)
+
+            if recomendacoes:
+                print("\nProdutos recomendados para este cliente:")
+                for i, recomendacao in enumerate(recomendacoes[:5]): # Limita a 5 recomendações
+                    print(f"{i+1}. {recomendacao}")
+            else:
+                print("Não foi possível gerar recomendações com base nos dados disponíveis.")
+
+    finally:
+        fechar_conexao(driver)
+
+if __name__ == "__main__":
+    main()
