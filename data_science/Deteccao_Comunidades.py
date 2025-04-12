@@ -17,59 +17,95 @@ def fechar_conexao(driver):
         driver.close()
 
 def criar_projecao_grafo_comunidades(tx):
-    """Cria uma projeção de grafo para uso com o algoritmo de Comunidades Louvain."""
     tx.run("""
-    CALL gds.graph.project(
-        'grafo_comunidades',
-        'Cliente',
-        'COMPROU'
-    )
+        CALL gds.graph.project(
+            'grafo_comunidades',
+            'Cliente',
+            {
+                COMPROU: {
+                    type: 'COMPROU',
+                    orientation: 'UNDIRECTED'
+                }
+            }
+        )
     """)
 
-def deletar_grafo_comunidades(tx):
-    """Remove a projeção do grafo de comunidades se já existir."""
-    tx.run("CALL gds.graph.drop('grafo_comunidades', false) YIELD graphName")
+def deletar_grafo(tx, nome):
+    tx.run(f"""
+        CALL gds.graph.exists('{nome}')
+        YIELD exists
+        WITH exists
+        WHERE exists
+        CALL gds.graph.drop('{nome}', false)
+        YIELD graphName
+        RETURN graphName
+    """)
 
 def detectar_comunidades(tx):
-    """Executa o algoritmo de Comunidades Louvain."""
     result = tx.run("""
-    CALL gds.louvain.stream('grafo_comunidades')
-    YIELD nodeId, communityId
-    RETURN gds.util.asNode(nodeId).nome AS cliente, communityId
-    ORDER BY communityId
+        CALL gds.louvain.stream('grafo_comunidades')
+        YIELD nodeId, communityId
+        RETURN gds.util.asNode(nodeId).nome AS cliente, communityId
+        ORDER BY communityId
     """)
     return result.data()
 
-def recomendar_por_comunidade(tx, cliente_nome):
-    """Encontra a comunidade do cliente e recomenda produtos populares nessa comunidade."""
-    # 1. Obtém a comunidade do cliente
-    result_cliente = tx.run("""
-    MATCH (c:Cliente {nome: $cliente_nome})
-    CALL gds.louvain.stream('grafo_comunidades', {seedProperty: 'louvain'})
-    YIELD nodeId, communityId
-    WHERE gds.util.asNode(nodeId) = c
-    RETURN communityId
-    """, cliente_nome=cliente_nome)
-    record_cliente = result_cliente.single()
+def escrever_similaridade(tx):
+    tx.run("""
+        CALL gds.nodeSimilarity.write(
+            'clientes_produtos',
+            {
+                relationshipTypes: ['COMPROU'],
+                similarityCutoff: 0.1,
+                writeRelationshipType: 'PARECIDO_COM',
+                writeProperty: 'score'
+            }
+        )
+    """)
 
-    if not record_cliente:
-        print("Cliente não encontrado ou comunidade não detectada.")
+def recomendar_por_similaridade(tx, cliente_nome):
+    result = tx.run("""
+        MATCH (c:Cliente {nome: $cliente_nome})-[:PARECIDO_COM]->(sim:Cliente)-[:COMPROU]->(p:Produto)
+        WHERE NOT (c)-[:COMPROU]->(p)
+        RETURN DISTINCT p.nome AS produto
+    """, cliente_nome=cliente_nome)
+    return [record["produto"] for record in result]
+
+def recomendar_por_comunidade(tx, cliente_nome):
+    result_cliente = tx.run("""
+        MATCH (c:Cliente {nome: $cliente_nome})
+        RETURN c
+    """, cliente_nome=cliente_nome)
+    cliente_node = result_cliente.single()
+    if not cliente_node:
+        print("Cliente não encontrado.")
         return []
 
-    cliente_comunidade = record_cliente["communityId"]
+    comunidade_result = tx.run("""
+        CALL gds.louvain.stream('grafo_comunidades')
+        YIELD nodeId, communityId
+        WITH nodeId, communityId WHERE gds.util.asNode(nodeId).nome = $cliente_nome
+        RETURN communityId
+    """, cliente_nome=cliente_nome)
+    comunidade_info = comunidade_result.single()
 
-    # 2. Encontra os produtos mais comprados por outros clientes na mesma comunidade
+    if not comunidade_info:
+        print("Comunidade não encontrada.")
+        return []
+
+    cliente_comunidade = comunidade_info["communityId"]
+
     recomendacoes = tx.run("""
-    MATCH (c:Cliente)-[:COMPROU]->(p:Produto)
-    WHERE c <> (:Cliente {nome: $cliente_nome})
-    WITH c
-    CALL gds.louvain.stream('grafo_comunidades', {seedProperty: 'louvain'})
-    YIELD nodeId, communityId
-    WHERE gds.util.asNode(nodeId) = c AND communityId = $comunidade
-    WITH p, count(*) AS quantidade
-    ORDER BY quantidade DESC
-    LIMIT 5
-    RETURN p.nome AS produto
+        MATCH (c:Cliente)-[:COMPROU]->(p:Produto)
+        WHERE c.nome <> $cliente_nome
+        WITH c, p
+        CALL gds.louvain.stream('grafo_comunidades')
+        YIELD nodeId, communityId
+        WHERE gds.util.asNode(nodeId).nome = c.nome AND communityId = $comunidade
+        WITH p, count(*) AS quantidade
+        ORDER BY quantidade DESC
+        LIMIT 5
+        RETURN p.nome AS produto
     """, cliente_nome=cliente_nome, comunidade=cliente_comunidade)
 
     return [record["produto"] for record in recomendacoes]
@@ -81,55 +117,44 @@ def main():
 
     try:
         with driver.session() as session:
-            # Tarefa de Detecção de Comunidades
             print("\n--- Detecção de Comunidades ---")
-            session.execute_write(deletar_grafo_comunidades)
+            session.execute_write(lambda tx: deletar_grafo(tx, 'grafo_comunidades'))
             session.execute_write(criar_projecao_grafo_comunidades)
-            session.execute_write(lambda tx: tx.run("CALL gds.louvain.mutate('grafo_comunidades', {mutateProperty: 'louvain'})"))
-            comunidades = session.execute_read(detectar_comunidades)
-            if comunidades:
-                print("Comunidades de Clientes:")
-                for cliente_comunidade in comunidades:
-                    print(f"Cliente: {cliente_comunidade['cliente']}, Comunidade: {cliente_comunidade['communityId']}")
-            else:
-                print("Nenhuma comunidade detectada.")
+            session.execute_write(lambda tx: tx.run("CALL gds.louvain.write('grafo_comunidades', {writeProperty: 'louvain'})"))
 
-            # Recomendação baseada em Similaridade (código original)
-            print("\n--- Recomendação por Similaridade ---")
-            cliente_nome_similaridade = input("Digite o nome do cliente para recomendação por similaridade: ")
-            session.execute_write(lambda tx: tx.run("CALL gds.graph.drop('clientes_produtos', false) YIELD graphName"))
+            comunidades = session.execute_read(detectar_comunidades)
+            for c in comunidades:
+                print(f"Cliente: {c['cliente']}, Comunidade: {c['communityId']}")
+
+            print("\n--- Recomendacao por Similaridade ---")
+            cliente_sim = input("Cliente para similaridade: ")
+            session.execute_write(lambda tx: deletar_grafo(tx, 'clientes_produtos'))
             session.execute_write(lambda tx: tx.run("""
                 CALL gds.graph.project(
                     'clientes_produtos',
                     ['Cliente', 'Produto'],
                     {
                         COMPROU: {
+                            type: 'COMPROU',
                             orientation: 'UNDIRECTED'
                         }
                     }
                 )
             """))
-            recomendacoes_similaridade = session.execute_read(recomendar_por_similaridade, cliente_nome=cliente_nome_similaridade)
-            if recomendacoes_similaridade:
-                print("\nProdutos recomendados com base em clientes similares:")
-                for i, r in enumerate(recomendacoes_similaridade, 1):
-                    print(f"{i}. {r}")
-            else:
-                print("Nenhuma recomendação por similaridade encontrada.")
+            session.execute_write(escrever_similaridade)  # <== AQUI foi corrigido!
+            recomendacoes_sim = session.execute_read(recomendar_por_similaridade, cliente_sim)
+            for i, r in enumerate(recomendacoes_sim, 1):
+                print(f"{i}. {r}")
 
-            # Recomendação baseada em Comunidade
-            print("\n--- Recomendação por Comunidade ---")
-            cliente_nome_comunidade = input("Digite o nome do cliente para recomendação por comunidade: ")
-            recomendacoes_comunidade = session.execute_read(recomendar_por_comunidade, cliente_nome=cliente_nome_comunidade)
-            if recomendacoes_comunidade:
-                print(f"\nProdutos recomendados para clientes na mesma comunidade de '{cliente_nome_comunidade}':")
-                for i, r in enumerate(recomendacoes_comunidade, 1):
-                    print(f"{i}. {r}")
-            else:
-                print("Nenhuma recomendação por comunidade encontrada.")
+            print("\n--- Recomendacao por Comunidade ---")
+            cliente_com = input("Cliente para comunidade: ")
+            recomendacoes_com = session.execute_read(recomendar_por_comunidade, cliente_com)
+            for i, r in enumerate(recomendacoes_com, 1):
+                print(f"{i}. {r}")
 
     finally:
         fechar_conexao(driver)
 
 if __name__ == "__main__":
     main()
+
