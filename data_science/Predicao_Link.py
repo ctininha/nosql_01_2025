@@ -1,108 +1,83 @@
 from neo4j import GraphDatabase
 
-# Configurações de conexão
-URI = "bolt://localhost:7687"
-USER = "neo4j"
-PASSWORD = "password"
+# Conexão com o Neo4j
+uri = "bolt://localhost:7687"
+usuario = "neo4j"
+senha = "password"  # <- Substitua pela sua senha real
+driver = GraphDatabase.driver(uri, auth=(usuario, senha))
 
-def conectar_neo4j():
-    try:
-        return GraphDatabase.driver(URI, auth=(USER, PASSWORD))
-    except Exception as e:
-        print(f"Erro ao conectar ao Neo4j: {e}")
-        return None
+def recomendar_produtos(nome_cliente):
+    with driver.session() as session:
+        # Remove grafo existente (se houver)
+        session.run("""
+            CALL gds.graph.exists('cliente_similaridade') YIELD exists
+            WITH exists WHERE exists
+            CALL gds.graph.drop('cliente_similaridade', false)
+            YIELD graphName RETURN graphName
+        """)
 
-def fechar_conexao(driver):
-    if driver:
-        driver.close()
+        # Criação do grafo com cliente e produto conectados por COMPROU
+        session.run("""
+            CALL gds.graph.project(
+                'cliente_similaridade',
+                ['Cliente', 'Produto'],
+                {
+                    COMPROU: {
+                        type: 'COMPROU',
+                        orientation: 'UNDIRECTED'
+                    }
+                }
+            )
+        """)
 
-def criar_projecao_grafo(tx):
-    """Cria uma projeção de grafo para uso com nodeSimilarity."""
-    tx.run("""
-    CALL gds.graph.project(
-        'clientes_produtos',
-        ['Cliente', 'Produto'],
-        {
-            COMPROU: {
-                orientation: 'UNDIRECTED'
-            }
-        }
-    )
-    """)
+# Link Prediction por similaridade
 
-def deletar_grafo(tx):
-    """Remove a projeção do grafo se já existir."""
-    tx.run("CALL gds.graph.drop('clientes_produtos', false) YIELD graphName")
+        # Algoritmo de similaridade (corrigido)
+        session.run("""
+            CALL gds.nodeSimilarity.write(
+                'cliente_similaridade',
+                {
+                    relationshipTypes: ['COMPROU'],
+                    similarityCutoff: 0.1,
+                    writeRelationshipType: 'PARECIDO_COM',
+                    writeProperty: 'score'
+                }
+            )
+        """)
 
-def recomendar_por_similaridade(tx, cliente_nome):
-    """Usa nodeSimilarity para encontrar clientes semelhantes e recomenda produtos."""
-    # 1. Obtem o ID do cliente
-    result = tx.run("""
-    MATCH (c:Cliente {nome: $cliente_nome})
-    RETURN id(c) AS id
-    """, cliente_nome=cliente_nome)
-    record = result.single()
-    if not record:
-        print("Cliente não encontrado.")
-        return []
+        # Recomendação de produtos comprados por clientes similares
+        result = session.run("""
+            MATCH (c:Cliente {nome: $nome_cliente})-[:PARECIDO_COM]->(sim:Cliente)-[:COMPROU]->(p:Produto)
+            WHERE NOT (c)-[:COMPROU]->(p)
+            RETURN DISTINCT p.nome AS produto
+        """, nome_cliente=nome_cliente)
 
-    cliente_id = record["id"]
+        return [record["produto"] for record in result]
 
-    # 2. Executa nodeSimilarity
-    similar_result = tx.run("""
-    CALL gds.nodeSimilarity.stream('clientes_produtos')
-    YIELD node1, node2, similarity
-    WHERE node1 = $id OR node2 = $id
-    RETURN
-        CASE WHEN node1 = $id THEN node2 ELSE node1 END AS similar_node_id,
-        similarity
-    ORDER BY similarity DESC
-    LIMIT 5
-    """, id=cliente_id)
+def listar_clientes():
+    with driver.session() as session:
+        result = session.run("MATCH (c:Cliente) RETURN DISTINCT c.nome AS nome ORDER BY nome")
+        return [record["nome"] for record in result]
 
-    similar_ids = [record["similar_node_id"] for record in similar_result]
-
-    if not similar_ids:
-        print("Nenhum cliente similar encontrado.")
-        return []
-
-    # 3. Recomenda produtos comprados pelos similares que o cliente ainda não comprou
-    recomendacoes = tx.run("""
-    MATCH (c:Cliente {nome: $cliente_nome})-[:COMPROU]->(p:Produto)
-    WITH collect(p) AS produtos_cliente
-
-    MATCH (c2:Cliente)-[:COMPROU]->(p2:Produto)
-    WHERE id(c2) IN $ids AND NOT p2 IN produtos_cliente
-    RETURN DISTINCT p2.nome AS produto
-    LIMIT 5
-    """, cliente_nome=cliente_nome, ids=similar_ids)
-
-    return [record["produto"] for record in recomendacoes]
-
-def main():
-    driver = conectar_neo4j()
-    if not driver:
-        return
-
-    try:
-        with driver.session() as session:
-            cliente_nome = input("Digite o nome do cliente: ")
-
-            # Deleta e recria a projeção do grafo para garantir dados atualizados
-            session.execute_write(deletar_grafo)
-            session.execute_write(criar_projecao_grafo)
-
-            recomendacoes = session.execute_read(recomendar_por_similaridade, cliente_nome=cliente_nome)
-
-            if recomendacoes:
-                print("\nProdutos recomendados com base em clientes similares:")
-                for i, r in enumerate(recomendacoes, 1):
-                    print(f"{i}. {r}")
-            else:
-                print("Nenhuma recomendação foi encontrada.")
-
-    finally:
-        fechar_conexao(driver)
-
+# Execução principal
 if __name__ == "__main__":
-    main()
+    print("\n📋 Clientes disponíveis:")
+    clientes = listar_clientes()
+    for nome in clientes:
+        print(f"- {nome}")
+
+    nome_input = input("\nDigite o nome do cliente: ").strip()
+
+    if nome_input not in clientes:
+        print("⚠️ Cliente não encontrado.")
+    else:
+        recomendados = recomendar_produtos(nome_input)
+        print(f"\n🔮 Produtos recomendados para {nome_input}:")
+        if recomendados:
+            for p in recomendados:
+                print(f"- {p}")
+        else:
+            print("Nenhuma recomendação disponível no momento.")
+
+    driver.close()
+
